@@ -32,8 +32,8 @@ jobs:
 
       - name: Start SSH tunnel
         run: |
-          ngrok tcp 22 --log=stdout &
-          sleep 10
+          ngrok tcp 22 --region ap --log=stdout &
+          sleep 1
 
       - name: Keep alive
         run: |
