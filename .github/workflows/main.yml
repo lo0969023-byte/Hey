@@ -1,0 +1,41 @@
+name: SSH via Ngrok
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y openssh-server wget unzip
+
+      - name: Setup SSH
+        run: |
+          sudo useradd -m runner || true
+          echo "runner:123456" | sudo chpasswd
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh
+
+      - name: Install ngrok
+        run: |
+          wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
+          tar -xzf ngrok-v3-stable-linux-amd64.tgz
+          sudo mv ngrok /usr/local/bin/
+
+      - name: Configure ngrok
+        run: |
+          ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+
+      - name: Start SSH tunnel
+        run: |
+          ngrok tcp 22 --log=stdout &
+          sleep 10
+
+      - name: Keep alive
+        run: |
+          echo "SSH READY"
+          sleep 6h
